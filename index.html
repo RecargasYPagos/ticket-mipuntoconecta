@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Mi Punto Conecta - Sistema</title>
+<title>Mi Punto Conecta - Sistema PRO</title>
 
 <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 
@@ -60,6 +60,7 @@ line-height:1.2;
 
 <h3>MI PUNTO CONECTA</h3>
 
+<!-- DATOS -->
 <select id="operadora">
 <option value="Telcel">Telcel</option>
 <option value="BAIT">BAIT</option>
@@ -71,6 +72,14 @@ line-height:1.2;
 <input id="monto" placeholder="Monto (ej: 50)">
 <input id="numero" placeholder="Número">
 <input id="folio" placeholder="Folio (editable)">
+
+<!-- NUEVO -->
+<select id="modo">
+<option value="contado">Contado</option>
+<option value="credito">A crédito</option>
+</select>
+
+<input id="plazo" placeholder="Plazo (solo si es crédito)">
 
 <button onclick="generar()">Generar Ticket</button>
 <button onclick="descargar()">Descargar Imagen</button>
@@ -84,7 +93,7 @@ line-height:1.2;
 <script>
 
 /* =========================
-   BASE DE DATOS DE PLANES
+   BASE DE DATOS
 ========================= */
 
 const planes = {
@@ -150,19 +159,39 @@ const planes = {
 function obtenerPlan(op, monto){
 let p = planes[op];
 if(!p) return {p:"Personalizado", b:"Sin datos"};
-return p[monto] || {p:"Personalizado", b:"Sin paquete para este monto"};
+return p[monto] || {p:"Personalizado", b:"Sin paquete"};
 }
+
+/* ========================= */
 
 function generar(){
 
 let op = document.getElementById("operadora").value;
-let monto = parseInt(document.getElementById("monto").value);
+let monto = parseFloat(document.getElementById("monto").value);
 let numero = document.getElementById("numero").value;
 let folio = document.getElementById("folio").value;
+let modo = document.getElementById("modo").value;
+let plazo = parseInt(document.getElementById("plazo").value) || 0;
 
 let plan = obtenerPlan(op, monto);
 
 let now = new Date();
+
+let comision = 5;
+let total = monto + comision;
+
+/* FECHA DE PAGO */
+let fechaPagoTexto = "";
+
+if(modo === "credito"){
+let fechaPago = new Date();
+fechaPago.setDate(fechaPago.getDate() + plazo);
+
+fechaPagoTexto = `
+PLAZO: ${plazo} días
+FECHA DE PAGO: ${fechaPago.toLocaleDateString()}
+`;
+}
 
 let ticket = `
 ================================
@@ -177,6 +206,7 @@ HORA: ${now.toLocaleTimeString()}
 
 OPERADORA: ${op}
 NUMERO: ${numero}
+
 MONTO: $${monto}
 
 PAQUETE: ${plan.p}
@@ -184,6 +214,15 @@ PAQUETE: ${plan.p}
 --------------------------------
 BENEFICIOS:
 ${plan.b}
+
+--------------------------------
+COMISIÓN: $${comision}
+TOTAL A PAGAR: $${total}
+
+--------------------------------
+${modo === "credito" ? "TIPO: A CRÉDITO" : "TIPO: CONTADO"}
+
+${fechaPagoTexto}
 
 FOLIO: ${folio}
 
@@ -194,6 +233,8 @@ GRACIAS POR SU PREFERENCIA
 
 document.getElementById("ticket").textContent = ticket;
 }
+
+/* ========================= */
 
 function descargar(){
 html2canvas(document.getElementById("ticketArea")).then(canvas=>{
