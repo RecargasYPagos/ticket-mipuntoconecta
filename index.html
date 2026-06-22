@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Mi Punto Conecta - Sistema</title>
+
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+<style>
+body{
+font-family: monospace;
+background:#ddd;
+padding:10px;
+}
+
+.panel{
+max-width:450px;
+margin:auto;
+background:white;
+padding:10px;
+border:1px solid #ccc;
+}
+
+h3{
+text-align:center;
+}
+
+input, select{
+width:100%;
+padding:6px;
+margin:4px 0;
+font-family: monospace;
+}
+
+button{
+width:100%;
+padding:10px;
+margin-top:5px;
+cursor:pointer;
+}
+
+#ticketArea{
+background:white;
+padding:15px;
+margin-top:10px;
+border:1px solid #ccc;
+}
+
+pre{
+font-size:12px;
+white-space:pre-wrap;
+line-height:1.2;
+}
+</style>
+</head>
+
+<body>
+
+<div class="panel">
+
+<h3>MI PUNTO CONECTA</h3>
+
+<select id="operadora">
+<option value="Telcel">Telcel</option>
+<option value="BAIT">BAIT</option>
+<option value="AXIOS">AXIOS</option>
+<option value="AT&T">AT&T</option>
+<option value="MOVISTAR">Movistar</option>
+</select>
+
+<input id="monto" placeholder="Monto (ej: 50)">
+<input id="numero" placeholder="Número">
+<input id="folio" placeholder="Folio (editable)">
+
+<button onclick="generar()">Generar Ticket</button>
+<button onclick="descargar()">Descargar Imagen</button>
+
+<div id="ticketArea">
+<pre id="ticket"></pre>
+</div>
+
+</div>
+
+<script>
+
+/* =========================
+   BASE DE DATOS DE PLANES
+========================= */
+
+const planes = {
+
+"Telcel":{
+10:{p:"Amigo Sin Límite", b:"*264 https://www.telcel.com"},
+20:{p:"Amigo Sin Límite", b:"100MB + WhatsApp ilimitado (2 días)"},
+30:{p:"Amigo Sin Límite", b:"160MB + redes sociales (3 días)"},
+50:{p:"Amigo Sin Límite", b:"500MB + redes ilimitadas (7 días)"},
+80:{p:"Amigo Sin Límite", b:"800MB + 1.5GB redes (12 días)"},
+100:{p:"Amigo Sin Límite", b:"1.5GB + redes ilimitadas (15 días)"},
+150:{p:"Amigo Sin Límite", b:"2.5GB + Prime Video (25 días)"},
+200:{p:"Amigo Sin Límite", b:"3.5GB + servicios incluidos (30 días)"}
+},
+
+"BAIT":{
+30:{p:"BAIT", b:"1GB + redes (3 días)"},
+50:{p:"BAIT", b:"2GB + redes ilimitadas (7 días)"},
+60:{p:"BAIT", b:"4GB + redes ilimitadas (7 días)"},
+100:{p:"BAIT", b:"5GB + redes ilimitadas (15 días)"},
+120:{p:"BAIT", b:"Internet ilimitado (15 días)"},
+125:{p:"BAIT", b:"8GB + redes (20 días)"},
+200:{p:"BAIT", b:"12GB + redes (30 días)"}
+},
+
+"AXIOS":{
+15:{p:"Axios", b:"500MB + llamadas (1 día) https://www.axiosmobile.mx"},
+30:{p:"Axios", b:"500MB + 250 min (3 días)"},
+50:{p:"Axios", b:"2GB + redes ilimitadas (7 días)"},
+70:{p:"Axios", b:"6GB + redes ilimitadas (7 días)"},
+100:{p:"Axios", b:"2GB + redes ilimitadas (30 días)"},
+120:{p:"Axios", b:"3GB + redes ilimitadas (30 días)"},
+150:{p:"Axios", b:"4GB + redes ilimitadas (30 días)"}
+},
+
+"AT&T":{
+10:{p:"AT&T", b:"100MB + redes (1 día)"},
+20:{p:"AT&T", b:"200MB + redes (1 día)"},
+30:{p:"AT&T", b:"300MB + redes (3 días)"},
+50:{p:"AT&T", b:"750MB + redes (5 días)"},
+70:{p:"AT&T", b:"4.5GB + redes (10 días)"},
+100:{p:"AT&T", b:"2GB + redes ilimitadas (14 días)"},
+120:{p:"AT&T", b:"7.5GB + redes ilimitadas (21 días)"},
+150:{p:"AT&T", b:"3GB + redes ilimitadas (25 días)"},
+200:{p:"AT&T", b:"4GB + redes ilimitadas (30 días)"}
+},
+
+"MOVISTAR":{
+10:{p:"Movistar", b:"*611 https://www.movistar.com.mx"},
+20:{p:"Movistar", b:"*611 https://www.movistar.com.mx"},
+30:{p:"Movistar", b:"Vigencia 3 días"},
+50:{p:"Movistar", b:"7 días + llamadas + redes + 600MB"},
+100:{p:"Movistar", b:"Vigencia 15 días"},
+140:{p:"Movistar", b:"15 días + 7GB + redes"},
+150:{p:"Movistar", b:"Vigencia 28 días"},
+200:{p:"Movistar", b:"Vigencia 30 días"}
+}
+
+};
+
+/* ========================= */
+
+function obtenerPlan(op, monto){
+let p = planes[op];
+if(!p) return {p:"Personalizado", b:"Sin datos"};
+return p[monto] || {p:"Personalizado", b:"Sin paquete para este monto"};
+}
+
+function generar(){
+
+let op = document.getElementById("operadora").value;
+let monto = parseInt(document.getElementById("monto").value);
+let numero = document.getElementById("numero").value;
+let folio = document.getElementById("folio").value;
+
+let plan = obtenerPlan(op, monto);
+
+let now = new Date();
+
+let ticket = `
+================================
+        MI PUNTO CONECTA
+   RECARGAS, PAGOS Y SERVICIOS
+================================
+
+RECARGA EXITOSA
+
+FECHA: ${now.toLocaleDateString()}
+HORA: ${now.toLocaleTimeString()}
+
+OPERADORA: ${op}
+NUMERO: ${numero}
+MONTO: $${monto}
+
+PAQUETE: ${plan.p}
+
+--------------------------------
+BENEFICIOS:
+${plan.b}
+
+FOLIO: ${folio}
+
+================================
+GRACIAS POR SU PREFERENCIA
+================================
+`;
+
+document.getElementById("ticket").textContent = ticket;
+}
+
+function descargar(){
+html2canvas(document.getElementById("ticketArea")).then(canvas=>{
+let a = document.createElement("a");
+a.download = "ticket.png";
+a.href = canvas.toDataURL();
+a.click();
+});
+}
+
+</script>
+
+</body>
+</html>
