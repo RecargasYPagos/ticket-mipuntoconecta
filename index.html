@@ -60,7 +60,6 @@ line-height:1.2;
 
 <h3>MI PUNTO CONECTA</h3>
 
-<!-- DATOS -->
 <select id="operadora">
 <option value="Telcel">Telcel</option>
 <option value="BAIT">BAIT</option>
@@ -73,13 +72,12 @@ line-height:1.2;
 <input id="numero" placeholder="Número">
 <input id="folio" placeholder="Folio (editable)">
 
-<!-- NUEVO -->
 <select id="modo">
 <option value="contado">Contado</option>
 <option value="credito">A crédito</option>
 </select>
 
-<input id="plazo" placeholder="Plazo (solo si es crédito)">
+<input id="plazo" placeholder="Plazo (días)">
 
 <button onclick="generar()">Generar Ticket</button>
 <button onclick="descargar()">Descargar Imagen</button>
@@ -154,15 +152,15 @@ const planes = {
 
 };
 
-/* ========================= */
-
 function obtenerPlan(op, monto){
 let p = planes[op];
 if(!p) return {p:"Personalizado", b:"Sin datos"};
 return p[monto] || {p:"Personalizado", b:"Sin paquete"};
 }
 
-/* ========================= */
+/* =========================
+   GENERAR TICKET
+========================= */
 
 function generar(){
 
@@ -180,18 +178,29 @@ let now = new Date();
 let comision = 5;
 let total = monto + comision;
 
-/* FECHA DE PAGO */
+/* =========================
+   FECHA DE PAGO (HOY = DÍA 1)
+========================= */
+
 let fechaPagoTexto = "";
 
 if(modo === "credito"){
+
 let fechaPago = new Date();
-fechaPago.setDate(fechaPago.getDate() + plazo);
+
+// HOY CUENTA COMO DÍA 1
+fechaPago.setDate(fechaPago.getDate() + (plazo - 1));
 
 fechaPagoTexto = `
+TIPO: A CRÉDITO
 PLAZO: ${plazo} días
 FECHA DE PAGO: ${fechaPago.toLocaleDateString()}
 `;
+}else{
+fechaPagoTexto = "TIPO: CONTADO";
 }
+
+/* ========================= */
 
 let ticket = `
 ================================
@@ -217,11 +226,9 @@ ${plan.b}
 
 --------------------------------
 COMISIÓN: $${comision}
-TOTAL A PAGAR: $${total}
+TOTAL: $${total}
 
 --------------------------------
-${modo === "credito" ? "TIPO: A CRÉDITO" : "TIPO: CONTADO"}
-
 ${fechaPagoTexto}
 
 FOLIO: ${folio}
